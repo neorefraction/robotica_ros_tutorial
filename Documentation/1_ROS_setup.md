@@ -1,4 +1,4 @@
-# **1. ROS environment setup**
+# **1. ROS environment setup test**
 
 You can use the ROS environment developed by "The Construct" (https://app.theconstructsim.com/), enterprise working on ROS academia and development and located in Barcelona.
 - Open the link: https://app.theconstructsim.com/
