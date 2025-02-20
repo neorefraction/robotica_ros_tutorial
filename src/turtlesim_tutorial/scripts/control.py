@@ -8,6 +8,7 @@ def move_turtle(v,w):
     pub = rospy.Publisher('/turtle1/cmd_vel', Twist, queue_size=10)
     rate = rospy.Rate(10) # 10hz
     vel = Twist()
+
     while not rospy.is_shutdown():
         vel.linear.x = v
         vel.linear.y = 0
@@ -21,7 +22,7 @@ def move_turtle(v,w):
 
 if __name__ == '__main__':
     try:
-        v= 2
+        v= 4
         w= 1
         move_turtle(v,w)
     except rospy.ROSInterruptException:
