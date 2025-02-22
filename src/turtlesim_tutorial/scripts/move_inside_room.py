@@ -7,7 +7,7 @@ from turtlesim.msg import Pose
 # Global variables
 robot_x, robot_y = 5.544445, 5.544445 # origin position
 
-def setPose(pose: Pose) -> None:
+def update_pose(pose: Pose) -> None:
     # Retrieves global variables
     global robot_x, robot_y
     robot_x = pose.x
@@ -37,7 +37,7 @@ def move_turtle_controlled(
     
     # Set up node
     publisher = rospy.Publisher('/turtle1/cmd_vel', Twist, queue_size=10)
-    rospy.Subscriber('/turtle1/pose', Pose, setPose)
+    rospy.Subscriber('/turtle1/pose', Pose, update_pose)
     rate = rospy.Rate(10) # 10hz
     
     # Message to send the linear and angular speed to the turtlesim_node
