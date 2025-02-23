@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
+import math
 import rospy
 from geometry_msgs.msg import Twist
 from turtlesim.msg import Pose
-import string
 
 # Global variables
 robot_x, robot_y = 5.544445, 5.544445 # Origin position
@@ -10,7 +10,7 @@ robot_x, robot_y = 5.544445, 5.544445 # Origin position
 
 def update_pose(pose: Pose) -> None:
     '''
-    Updates turtle's global pose variables
+    Updates turtle's position
 
     Params:
     -------
@@ -24,32 +24,44 @@ def update_pose(pose: Pose) -> None:
     robot_y = pose.y
 
 
-def update_velocity(velocity: Twist, linear_velocity: float, angular_velocity: float) -> None:
+def draw_heart(velocity: Twist, t: int) -> None:
     '''
-    Updates turtle's velocity
+    Calculates turtle's velocity to draw a Heart
 
+    Params:
+    -------
+    velocity: geometry_msgs.msg
+        ROS velocity message (https://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/Twist.html)
+    t: int
+        Elapsed time in secods
     '''
+    
+    # Calculates the linear velocity for the X and Y axes based on the derivatives of the parametric heart equations:
+    # x(t) = 16sin(t)^3
+    # y(t) = 13cos(t) - 5cos(2t) - 2cos(3t) - cos(4t)
+    v_x = 48 * math.sin(t)**2 * math.cos(t)
+    v_y = -13 * math.sin(t) + 10 * math.sin(2*t) + 6 * math.sin(3*t) + math.sin(4*t)
 
-    velocity.linear.x = linear_velocity
-    velocity.linear.y = 0
-    velocity.linear.z = 0
-    velocity.angular.x = 0
-    velocity.angular.y = 0
-    velocity.angular.z = angular_velocity
+    # used to adjust units to turtlesim window
+    c = 0.2
+
+    # Updates velocity
+    velocity.linear.x = v_x * c
+    velocity.linear.y = v_y * c
 
 
-def move_turtle_timed(linear_velocity: float, angular_velocity: float, time_interval: int) -> None:
+def move_turtle_timed(time_interval: int) -> None:
     '''
-    Moves the turtle for a time interval
+    Moves the turtle given a linear and angular velocity for a time interval
 
     Params:
     -------
     linear_velocity: float
-        Value for turtlesim linear velocity for the x axis
+        Turtlesim linear velocity for the X axis
     angular_velocity: float
-        Value for turtlesim angular velocity for the z axis
+        Turtlesim angular velocity for the Z axis
     time: int
-        Time interval in secods
+        Time interval in seconds
     '''
 
     # retrieves global variables
@@ -64,32 +76,34 @@ def move_turtle_timed(linear_velocity: float, angular_velocity: float, time_inte
 
     # defines a Twist message to update turtlesim velocity
     velocity = Twist()
-    c = 1
     # defines a timer start
     start = rospy.Time.now()
 
     # node main loop
     while not rospy.is_shutdown():
+
         elapsed_time = (rospy.Time.now() - start).to_sec()
         
+        # Stops robot
         if(elapsed_time > time_interval):
-            rospy.loginfo(f'Time elapsed: {elapsed_time}')
+            publisher.publish(Twist())
+            rospy.loginfo(f'Time elapsed: {round(elapsed_time, 2)}')
             rospy.loginfo('Timer finished\nStopping robot')
             return
         
-        rospy.loginfo(f'Time elapsed: {elapsed_time}')
-        update_velocity(velocity, linear_velocity, angular_velocity * c)
+        # Updates robot velocity
+        rospy.loginfo(f'Time elapsed: {round(elapsed_time, 2)}')
+        draw_heart(velocity, elapsed_time)
         publisher.publish(velocity)
-        c += 10
-        c *= -1
         rate.sleep()
+
+    # If we press control + C, the node will stop.
+    rospy.spin()
 
 if __name__ == '__main__':
     try:
         rospy.init_node(f'move_time', anonymous=False)
-        v= rospy.get_param("~v")
-        w= rospy.get_param("~w")
         t= rospy.get_param("~t")
-        move_turtle_timed(v,w,t)
+        move_turtle_timed(t)
     except rospy.ROSInterruptException:
         pass
